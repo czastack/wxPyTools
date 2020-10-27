@@ -18,8 +18,7 @@ class MainFrame(wx.Frame):
 
         self.SetSize(self.FromDIP(wx.Size(640, 960)))
         self.SetSizeHints(wx.DefaultSize, wx.DefaultSize)
-        self.mgr = wx.aui.AuiManager()
-        self.mgr.SetManagedWindow(self)
+        self.mgr = wx.aui.AuiManager(self)
         self.mgr.SetFlags(wx.aui.AUI_MGR_DEFAULT)
 
         self.Freeze()
