@@ -1,6 +1,7 @@
 import os
 import sys
 import types
+import traceback
 import wx
 import wx.aui
 
@@ -8,18 +9,18 @@ from dataclasses import dataclass
 from typing import List
 from common import CONF_DIR
 from widgets.bottompane import BottomPane
-from lib.wxutils import ParseMenu
+from lib.wxutils import ParseMenuBar
 
 
-class MainFrame(wx.Frame):
+class MainFrame(wx.aui.AuiMDIParentFrame):
 
     def __init__(self, parent):
-        wx.Frame.__init__(self, parent, id=wx.ID_ANY, title='主窗口', style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL)
+        wx.aui.AuiMDIParentFrame.__init__(
+            self, parent, wx.ID_ANY, '主窗口', style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL)
 
         self.SetSize(self.FromDIP(wx.Size(640, 960)))
         self.SetSizeHints(wx.DefaultSize, wx.DefaultSize)
         self.mgr = wx.aui.AuiManager(self)
-        self.mgr.SetFlags(wx.aui.AUI_MGR_DEFAULT)
 
         self.Freeze()
         self.menubar = wx.MenuBar(0)
@@ -32,9 +33,6 @@ class MainFrame(wx.Frame):
             wx.aui.AUI_TB_TEXT))
         self.InitToolBar()
         self.mgr.AddPane(self.auiToolBar, wx.aui.AuiPaneInfo().Top().CaptionVisible(False).CloseButton(False))
-
-        self.notebook = wx.aui.AuiNotebook(self)
-        self.mgr.AddPane(self.notebook, wx.aui.AuiPaneInfo().Center().CaptionVisible(False).CloseButton(False))
 
         self.bottomPane = BottomPane(self, size=self.FromDIP(wx.Size(-1, 150)))
         self.mgr.AddPane(self.bottomPane, wx.aui.AuiPaneInfo().Name("bottom").Bottom().CloseButton(
@@ -62,13 +60,8 @@ class MainFrame(wx.Frame):
 
     def OnClose(self, event):
         """Event handler for closing."""
-        if self.bottomPane.shell.waiting:
-            if event.CanVeto():
-                event.Veto(True)
-        else:
-            self.bottomPane.shell.destroy()
-            self.mgr.UnInit()
-            event.Skip()
+        self.mgr.UnInit()
+        event.Skip()
 
     def InitMenuBar(self):
         """初始化菜单"""
@@ -99,15 +92,7 @@ class MainFrame(wx.Frame):
             },
         ]
 
-        for menudata in data:
-            # 一级菜单
-            menu = wx.Menu()
-            children = menudata.get('children', None)
-            if children:
-                for childdata in children:
-                    ParseMenu(self, menu, childdata)
-
-            self.menubar.Append(menu, menudata['text'])
+        ParseMenuBar(self, self.menubar, data)
 
     def InitToolBar(self):
         """初始化工具"""
@@ -233,4 +218,5 @@ if __name__ == "__main__":
     app = wx.App()
     frm = MainFrame(None)
     frm.Show()
+    frm.Raise()
     app.MainLoop()

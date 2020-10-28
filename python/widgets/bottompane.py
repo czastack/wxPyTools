@@ -2,7 +2,6 @@ import os
 import sys
 import traceback
 import wx
-import wx.aui
 import wx.py
 from wx.py.pseudo import PseudoFileOut, PseudoFileErr
 from common import DATA_DIR
@@ -25,16 +24,15 @@ class MyShell(wx.py.shell.Shell):
         super().OnKeyDown(event)
 
 
-class BottomPane(wx.aui.AuiNotebook):
+class BottomPane(wx.Notebook):
     """
     底部面板
     """
     def __init__(self, parent, *args, **kwargs):
-        kwargs.setdefault('style', wx.aui.AUI_NB_DEFAULT_STYLE & ~wx.aui.AUI_NB_CLOSE_ON_ACTIVE_TAB)
-        wx.aui.AuiNotebook.__init__(self, parent, *args, **kwargs)
+        wx.Notebook.__init__(self, parent, *args, **kwargs)
+
         self.outputWindow = wx.TextCtrl(self, style=wx.TE_READONLY | wx.TE_MULTILINE | wx.TE_RICH2 | wx.TE_WORDWRAP)
         self.AddPage(self.outputWindow, '输出')
-
         self.shell = MyShell(self, execStartupScript=False)
         self.AddPage(self.shell, '控制台')
 
@@ -42,7 +40,6 @@ class BottomPane(wx.aui.AuiNotebook):
 
         self.stdout = sys.stdout
         self.stderr = sys.stderr
-
         self.redirectStdout()
         self.redirectStderr()
 
@@ -93,6 +90,11 @@ class BottomPane(wx.aui.AuiNotebook):
         self.SaveHistory()
         self.redirectStdout(False)
         self.redirectStderr(False)
+        if self.shell.waiting:
+            if event.CanVeto():
+                event.Veto(True)
+        else:
+            self.shell.destroy()
 
     def redirectStdout(self, redirect=True):
         """重定向标准输出"""

@@ -1,6 +1,24 @@
 import wx
 
 
+def ParseMenuBar(owner, menubar, data):
+    """
+    递归解析添加菜单到wx.MenuBar
+    owner: 拥有者
+    menubar: wx.MenuBar
+    data: list
+    """
+    for menudata in data:
+        # 一级菜单
+        menu = wx.Menu()
+        children = menudata.get('children', None)
+        if children:
+            for childdata in children:
+                ParseMenu(owner, menu, childdata)
+
+        menubar.Append(menu, menudata['text'])
+
+
 def ParseMenu(owner, parent, data):
     """
     递归解析添加菜单
