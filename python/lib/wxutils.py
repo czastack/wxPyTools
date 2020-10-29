@@ -47,3 +47,40 @@ def ParseMenu(owner, parent, data):
         parent.AppendSubMenu(submenu, data['text'])
         for childdata in children:
             ParseMenu(owner, submenu, childdata)
+
+
+def choose_file(msg, dir, file, wildcard=wx.FileSelectorDefaultWildcardStr, mustExist=False):
+    """选择文件"""
+    flag = wx.FD_OPEN
+    if mustExist:
+        flag |= wx.FD_FILE_MUST_EXIST
+    dialog = wx.FileDialog(None, msg, dir, file, wildcard, flag)
+    if dialog.ShowModal() == wx.ID_CANCEL:
+        return wx.NoneString
+
+    return dialog.GetPath()
+
+
+def json_dump_file(owner, data, dumper=None):
+    """选择json文件导出"""
+    lastfile = owner and getattr(owner, 'lastfile', None)
+    path = choose_file("选择保存文件", file=lastfile, wildcard='*.json')
+    if path:
+        if owner:
+            owner.lastfile = path
+        with open(path, 'w', encoding="utf-8") as file:
+            if dumper is None:
+                json.dump(data, file)
+            else:
+                dumper(data, file)
+
+
+def json_load_file(owner):
+    """选择json文件导入"""
+    lastfile = owner and getattr(owner, 'lastfile', None)
+    path = choose_file("选择读取文件", file=lastfile, wildcard='*.json')
+    if path:
+        if owner:
+            owner.lastfile = path
+        with open(path, encoding="utf-8") as file:
+            return json.load(file)

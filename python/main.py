@@ -46,6 +46,7 @@ class MainFrame(wx.aui.AuiMDIParentFrame):
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.LoadSettings()
 
+        self.tool_dialog = None
         self.tool_tree = None
 
     def LoadSettings(self):
@@ -122,9 +123,8 @@ class MainFrame(wx.aui.AuiMDIParentFrame):
 
     def OnOpenTool(self, event):
         """打开工具对话框"""
-        dialog = getattr(self, 'tool_dialog', None)
-        if dialog is None:
-            dialog = wx.Dialog(self, wx.ID_ANY, "打开工具", wx.DefaultPosition, self.FromDIP(
+        if self.tool_dialog is None:
+            self.tool_dialog = dialog = wx.Dialog(self, wx.ID_ANY, "打开工具", wx.DefaultPosition, self.FromDIP(
                 wx.Size(480, 640)), wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
             sizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -154,7 +154,7 @@ class MainFrame(wx.aui.AuiMDIParentFrame):
 
             dialog.SetSizer(sizer)
             # sizer.Fit(dialog)
-        dialog.ShowModal()
+        self.tool_dialog.ShowModal()
 
     def OnToggleBottom(self, event):
         """显示/隐藏底栏"""
@@ -174,7 +174,7 @@ class MainFrame(wx.aui.AuiMDIParentFrame):
             self.tool_tree.Toggle(item)
         else:
             self.open_tool_by_name(itemdata.module)
-            self.tool_dialog.EndModal()
+            self.tool_dialog.EndModal(wx.ID_OK)
 
     def get_sub_tools(self, parent):
         """获取子目录工具"""
@@ -199,9 +199,18 @@ class MainFrame(wx.aui.AuiMDIParentFrame):
         """根据名称打开工具"""
         Tool = self.get_tool(name)
         try:
-            tool = Tool(self.notebook)
+            tool = Tool(self)
         except Exception as e:
             traceback.print_exc()
+
+    def toggle_topmost(self, topmost: bool):
+        """切换窗口置顶"""
+        style = self.GetWindowStyle()
+        if topmost:
+            style |= wx.STAY_ON_TOP
+        else:
+            style &= ~wx.STAY_ON_TOP
+        self.SetWindowStyle(style)
 
 
 @dataclass
